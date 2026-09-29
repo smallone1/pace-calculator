@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跑步配速計算機</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f7;
+            color: #333;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .inputs { display: flex; gap: 8px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #0056b3; }
+        .clear-btn { background-color: #8e8e93; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>配速三項換算器</h2>
+    <p style="font-size: 13px; color: #666; text-align: center;">填寫任意兩項，留空一項點擊計算</p>
+    
+    <div class="input-group">
+        <label>總距離 (公里)</label>
+        <input type="number" id="dist" step="0.01" placeholder="例如: 10">
+    </div>
+
+    <div class="input-group">
+        <label>總時間 (時 : 分 : 秒)</label>
+        <div class="inputs">
+            <input type="number" id="timeH" placeholder="時" min="0">
+            <input type="number" id="timeM" placeholder="分" min="0" max="59">
+            <input type="number" id="timeS" placeholder="秒" min="0" max="59">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label>平均配速 (分 : 秒 / 公里)</label>
+        <div class="inputs">
+            <input type="number" id="paceM" placeholder="分" min="0">
+            <input type="number" id="paceS" placeholder="秒" min="0" max="59">
+        </div>
+    </div>
+
+    <button onclick="calculate()">換算未知項</button>
+    <button class="clear-btn" onclick="clearAll()">清除重填</button>
+</div>
+
+<script>
+function calculate() {
+    let dist = parseFloat(document.getElementById('dist').value);
+    
+    let th = parseInt(document.getElementById('timeH').value) || 0;
+    let tm = parseInt(document.getElementById('timeM').value) || 0;
+    let ts = parseInt(document.getElementById('timeS').value) || 0;
+    let totalTimeSec = (document.getElementById('timeH').value || document.getElementById('timeM').value || document.getElementById('timeS').value) 
+                       ? (th * 3600 + tm * 60 + ts) : NaN;
+
+    let pm = parseInt(document.getElementById('paceM').value) || 0;
+    let ps = parseInt(document.getElementById('paceS').value) || 0;
+    let paceSec = (document.getElementById('paceM').value || document.getElementById('paceS').value) 
+                  ? (pm * 60 + ps) : NaN;
+
+    // 判斷有值的數量
+    let hasDist = !isNaN(dist) && dist > 0;
+    let hasTime = !isNaN(totalTimeSec) && totalTimeSec > 0;
+    let hasPace = !isNaN(paceSec) && paceSec > 0;
+
+    // 1. 輸入 距離 + 時間 -> 求 配速
+    if (hasDist && hasTime && !hasPace) {
+        let calcPace = totalTimeSec / dist;
+        let m = Math.floor(calcPace / 60);
+        let s = Math.round(calcPace % 60);
+        if (s === 60) { m += 1; s = 0; }
+        document.getElementById('paceM').value = m;
+        document.getElementById('paceS').value = s;
+    } 
+    // 2. 輸入 配速 + 距離 -> 求 時間
+    else if (hasPace && hasDist && !hasTime) {
+        let calcTime = paceSec * dist;
+        let h = Math.floor(calcTime / 3600);
+        let m = Math.floor((calcTime % 3600) / 60);
+        let s = Math.round(calcTime % 60);
+        if (s === 60) { m += 1; s = 0; }
+        if (m === 60) { h += 1; m = 0; }
+        document.getElementById('timeH').value = h;
+        document.getElementById('timeM').value = m;
+        document.getElementById('timeS').value = s;
+    } 
+    // 3. 輸入 時間 + 配速 -> 求 距離
+    else if (hasTime && hasPace && !hasDist) {
+        let calcDist = (totalTimeSec / paceSec).toFixed(2);
+        document.getElementById('dist').value = calcDist;
+    } 
+    else {
+        alert("請剛好填寫其中兩項，留空要計算的第三項！");
+    }
+}
+
+function clearAll() {
+    document.getElementById('dist').value = '';
+    document.getElementById('timeH').value = '';
+    document.getElementById('timeM').value = '';
+    document.getElementById('timeS').value = '';
+    document.getElementById('paceM').value = '';
+    document.getElementById('paceS').value = '';
+}
+</script>
+
+</body>
+</html>
